@@ -1,0 +1,12 @@
+node_modules/
+output/
+.playwright-cli/
+.env*
+.DS_Store
+.cache/
+dist/
+tests/results/
+playwright-report/
+pnpm-lock.yaml
+# 原文の空白や改行もブラウザーテストの入力。
+tests/src/e2e/article.html

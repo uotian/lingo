@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Articles</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font:
+          16px/1.5 system-ui,
+          sans-serif;
+      }
+      body {
+        margin: 24px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td {
+        padding: 10px;
+        border-block: 1px solid #888;
+      }
+      td:first-child {
+        width: 15%;
+        white-space: nowrap;
+      }
+      td > a.title {
+        color: #246aa1;
+        text-decoration: none;
+      }
+      td > a.title:hover,
+      td > a.title:focus-visible {
+        text-decoration: underline;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #151515;
+          color: #eee;
+        }
+        td {
+          border-color: #444;
+        }
+        td > a.title {
+          color: #75b0e0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td><span class="listing-date">11/15/23</span></td>
+          <td>
+            <a href="article.html#tools" class="title listing-title"
+              >Tools for curating LLM Data</a
+            >
+          </td>
+        </tr>
+        <tr>
+          <td><span class="listing-date">6/29/26</span></td>
+          <td>
+            <a href="article.html#eval" class="title listing-title"
+              >“It’s Hard to Eval” Is a Product Smell</a
+            >
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

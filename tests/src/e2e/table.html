@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Library</title>
+    <style>
+      body {
+        font: 16px/1.5 system-ui;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td {
+        padding: 8px;
+        border-block: 1px solid silver;
+      }
+      .summary {
+        width: 100%;
+        max-width: 0;
+      }
+      tr {
+        position: relative;
+      }
+      .row-link {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+      .author {
+        display: flex;
+        white-space: nowrap;
+      }
+      .date {
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <table>
+      <tbody>
+        <tr>
+          <td class="summary">
+            <a class="row-link" href="#article" aria-label="Open article"></a>
+            <p><a href="#report">Index reference</a></p>
+            <p>Read the index reference.</p>
+          </td>
+          <td><span class="author">Mina Kato</span></td>
+          <td class="date">Mar 2024</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>

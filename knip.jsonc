@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  // Chrome の設定からファイル名で読み込まれる入口。
+  "entry": ["popup.js", "background.js", "content.js"],
+  "project": ["*.{js,mjs}", "scripts/**/*.mjs", "tests/src/**/*.js"],
+}
