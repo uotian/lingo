@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join } from "node:path";
 const manifest = JSON.parse(await readFile("manifest.json", "utf8"));
 const files = new Set([
   "manifest.json",
+  "models.json",
   manifest.options_page,
   manifest.background.service_worker,
   "lib.js",

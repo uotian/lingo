@@ -34,7 +34,7 @@ APIキーはAuthorizationヘッダーに載せ、CookieやページURLを付け�
 
 ## API契約
 
-Chat Completions の JSON mode を使い、`store: false` を指定します。提供元のデータ保持はその運営者の方針に従います。初期モデルの `gpt-6-luna` には `reasoning_effort: "none"` を指定します。カスタムの接続先もこれらの項目に対応している必要があります。
+Chat Completions の JSON mode を使い、`store: false` を指定します。提供元のデータ保持はその運営者の方針に従います。配信一覧で `reasoningEffort: "none"` を指定したモデルには `reasoning_effort: "none"` を付けます。カスタムの接続先もこれらの項目に対応している必要があります。
 
 指定の翻訳プロンプトは [lib.js](../lib.js) の TRANSLATION_PROMPT にあります。選択した翻訳先をプロンプトに差し込み、タイトルを参考情報に使います。要約・用語集は補いません。原文内の指示はデータとして扱います。
 
@@ -42,7 +42,9 @@ Chat Completions の JSON mode を使い、`store: false` を指定します。�
 
 ## 概算料金
 
-設定画面のモデル候補と料金計算には [lib.js](../lib.js) の同じモデル一覧を使います。モデルを追加するときは、ID・表示名と、通常入力・キャッシュ読み取り・キャッシュ書き込み・出力の100万トークン当たりの米ドル単価を登録します。標準料金は2026年11月19日に確認しました。[Luna](https://developers.openai.com/api/docs/models/gpt-6-luna) · [Sol](https://developers.openai.com/api/docs/models/gpt-6-sol) · [Sol 6.1](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
+推奨モデルと候補、標準料金の正本は [models.json](../models.json) です。Lingoは設定の読み込み時や翻訳開始時に[配信版](https://uotian.github.io/lingo/models.json)を確認し、正常に取得した一覧を端末に24時間保存します。GitHub PagesへのリクエストにはAPIキー・本文・閲覧ページのURL・Cookieを付けません。取得失敗時や形式が不正な場合は前回の一覧、初回は同梱の一覧を使い、15分後から再取得します。
+
+「推奨」では翻訳開始時の一覧から実際のモデルIDを決め、その処理中は同じモデルと単価を使います。モデル名を直接選ぶとそのIDを保存します。以前から保存していたIDも維持します。通常入力・キャッシュ読み取り・キャッシュ書き込み・出力の単価は、いずれも100万トークン当たりの米ドルです。初回公開分は2026年11月21日に確認しました。[Luna](https://developers.openai.com/api/docs/models/gpt-6-luna) · [Sol](https://developers.openai.com/api/docs/models/gpt-6-sol) · [Sol 6.1](https://developers.openai.com/api/docs/models/gpt-6.1-sol)
 
 公式の送信先で受け取った翻訳応答の `usage` に各単価を掛け、1米ドル＝159.35円で換算します。為替は2026年11月18日17時のドル円の売値と買値の中間値を固定で使います。中止などで応答を受け取れなかった分、税、決済時の為替差は含みません。[APIの使用量](https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create) · [日本銀行の外国為替市況](https://www.boj.or.jp/statistics/market/forex/fxdaily/fxlist/fx261118.pdf)
 

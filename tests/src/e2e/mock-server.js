@@ -2,6 +2,15 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import assert from "node:assert/strict";
 
+import { testCatalog } from "../catalog.js";
+const catalog = {
+  ...testCatalog,
+  recommended: "test-fast",
+  models: [
+    ...testCatalog.models,
+    { id: "test-fast", label: "Test Luna", input: 1, cached: 0.1, write: 1.25, output: 2 },
+  ],
+};
 const pages = {
   "/tests/article.html": await readFile(new URL("./article.html", import.meta.url)),
   "/tests/listing.html": await readFile(new URL("./listing.html", import.meta.url)),
@@ -46,6 +55,13 @@ http
       res.end(JSON.stringify(value));
     };
     const path = req.url.split("?")[0];
+    if (path === "/models.json") {
+      assert.equal(req.headers.authorization, undefined);
+      assert.equal(req.headers.cookie, undefined);
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      json(200, catalog);
+      return;
+    }
     if (Object.hasOwn(pages, path)) {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(pages[path]);

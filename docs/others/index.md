@@ -25,6 +25,8 @@ VS Codeでは推奨拡張のESLint・Prettierを有効にします。整形・�
 
 [CI](../../.github/workflows/check.yml) はpushとpull requestで起動します。Ubuntu・macOSでロックファイルから依存を復元して pnpm check を実行し、UbuntuではChromiumを入れてE2Eも実行します。
 
+推奨モデルを変えるときは [models.json](../../models.json) の `recommended` に `models` 内のIDを指定します。各モデルの単価は米ドル／100万トークンです。変更をmainへpushすると[配信用ワークフロー](../../.github/workflows/pages.yml)が拡張と同じ形式チェックを行い、JSONだけを[GitHub Pages](https://uotian.github.io/lingo/models.json)に公開します。同じファイルを拡張のビルドにも含めます。
+
 E2Eは 127.0.0.1:4177 の疑似APIを自分で起動して終了します。既にポートが使われているときは失敗します。個人のキーやChromeプロファイルは不要です。Linuxでブラウザーのシステム依存も必要な場合は `pnpm exec playwright install --with-deps chromium` を使います。
 
 [テストの規約](../../tests/RULES.md) · [拡張の構成](../index.md)

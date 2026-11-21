@@ -1,0 +1,36 @@
+name: Publish model catalog
+on:
+  push:
+    branches: [main]
+    paths: [models.json, lib.js, .github/workflows/pages.yml]
+  workflow_dispatch:
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+      - name: Validate and stage models.json
+        run: |
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import {validateCatalog} from "./lib.js"; validateCatalog(JSON.parse(readFileSync("models.json", "utf8")))'
+          mkdir site
+          cp models.json site/
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

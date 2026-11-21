@@ -5,6 +5,15 @@ import { join } from "node:path";
 async function launchExtension(chromium, testInfo, profile = "") {
   const extension = testInfo.outputPath("extension");
   await cp("dist", extension, { recursive: true });
+  // モデル配信もテスト用の疑似APIで完結させる。
+  const lib = join(extension, "lib.js");
+  await writeFile(
+    lib,
+    (await readFile(lib, "utf8")).replace(
+      "https://uotian.github.io/lingo/models.json",
+      "http://127.0.0.1:4177/models.json",
+    ),
+  );
   const file = join(extension, "manifest.json");
   const manifest = JSON.parse(await readFile(file, "utf8"));
   // ヘッドレス環境の権限ダイアログを避けるため、テスト用コピーだけに追加する。
@@ -22,7 +31,12 @@ async function translationRequests(context) {
   return (await response.json()).requests;
 }
 
+test.beforeEach(async ({ request }) => {
+  await request.get("http://127.0.0.1:4177/mode/ok");
+});
+
 test("設定の保存・翻訳・復元・中止とキーの保護", async ({ playwright }, testInfo) => {
+  test.slow();
   const context = await launchExtension(playwright.chromium, testInfo);
   try {
     let runtimeErrors = 0;
@@ -50,7 +64,8 @@ test("設定の保存・翻訳・復元・中止とキーの保護", async ({ pl
     const popupUrl = worker.url().replace("background.js", "popup.html#tab=" + tabId);
     await page.goto(popupUrl);
     const model = page.getByRole("combobox", { name: "モデル", exact: true });
-    await expect(model).toHaveValue("gpt-6-luna");
+    await expect(model).toHaveValue("@recommended");
+    await expect(model.locator("option:checked")).toContainText("Test Luna");
     await model.selectOption("gpt-6-sol");
     await page.getByRole("textbox", { name: "APIキー 未設定" }).fill("lingo-test-key");
     await page.getByRole("textbox", { name: "Base URL 任意" }).fill("http://127.0.0.1:4177/v1");
@@ -764,6 +779,32 @@ async function expectMarkerAtTextEnd(worker, tabId, selectors, original) {
     expect(gap, selector).toBeLessThanOrEqual(8);
   }
 }
+
+test("推奨を選ぶと配信されたモデルで翻訳して配信単価で集計する", async ({ playwright }, testInfo) => {
+  const context = await launchExtension(playwright.chromium, testInfo);
+  try {
+    const { popup } = await openTestPage(context);
+    const worker = context.serviceWorkers()[0];
+    await worker.evaluate(async () => {
+      const fetchLocal = globalThis.fetch;
+      globalThis.fetch = (url, options) => {
+        if (url !== "https://api.openai.com/v1/chat/completions") return fetchLocal(url, options);
+        if (JSON.parse(options.body).model !== "test-fast") throw new Error("Expected the recommended model");
+        return fetchLocal("http://127.0.0.1:4177/v1/chat/completions", options);
+      };
+      await chrome.storage.local.set({
+        settings: { baseUrl: "https://api.openai.com/v1", apiKey: "lingo-test-key", model: "@recommended" },
+      });
+    });
+    await popup.reload();
+    await popup.getByRole("button", { name: "翻訳", exact: true }).click();
+    await expect(popup.locator("#translation-count")).toHaveText("2/2");
+    // 1,000入力×1ドル + 500出力×2ドル（100万トークン当たり）。
+    await expect(popup.locator("#translation-cost")).toHaveText("約0.32円");
+  } finally {
+    await context.close();
+  }
+});
 
 test("ページを開き直して保存済みの訳文を使い、変更した文章だけ送る", async ({ playwright }, testInfo) => {
   const profile = testInfo.outputPath("profile");

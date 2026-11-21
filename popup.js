@@ -1,6 +1,6 @@
 import {
   DEFAULT_BASE_URL,
-  MODELS,
+  RECOMMENDED_MODEL,
   PAGE_LIMITS,
   LANGUAGES,
   YEN_PER_USD,
@@ -61,8 +61,14 @@ function renderSettings(value) {
   input("api-key").placeholder = value.hasKey ? "変更するときだけ入力" : "sk-…";
   $("key-state").textContent = value.hasKey ? "保存済み" : "未設定";
   button("forget").disabled = !value.hasKey;
-  modelSelect.replaceChildren(...MODELS.map(({ id, label }) => new Option(label, id)));
-  if (!MODELS.some(({ id }) => id === value.model)) modelSelect.add(new Option(value.model, value.model));
+  const { models, recommended } = value;
+  const current = models.find(({ id }) => id === recommended);
+  modelSelect.replaceChildren(
+    new Option(`推奨・高速で低価格（${current.label}）`, RECOMMENDED_MODEL),
+    ...models.map(({ id, label }) => new Option(label, id)),
+  );
+  if (value.model !== RECOMMENDED_MODEL && !models.some(({ id }) => id === value.model))
+    modelSelect.add(new Option(value.model, value.model));
   modelSelect.value = value.model;
   input("base-url").value = value.baseUrl === DEFAULT_BASE_URL ? "" : value.baseUrl;
   updateTranslationControls();

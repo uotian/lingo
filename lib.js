@@ -1,16 +1,10 @@
 export const DEFAULT_BASE_URL = "https://api.openai.com/v1";
-export const DEFAULT_MODEL = "gpt-6-luna";
+export const RECOMMENDED_MODEL = "@recommended";
 export const LANGUAGES = {
   en: { label: "英語", name: "English" },
   ja: { label: "日本語", name: "Japanese" },
   zh: { label: "中国語", name: "Chinese" },
 };
-// OpenAIの標準料金（100万トークンあたりの米ドル）。単価と為替の出典は docs/index.md。
-export const MODELS = [
-  { id: DEFAULT_MODEL, label: "Luna（デフォルト）", input: 0.1, cached: 0.01, write: 0.125, output: 0.5 },
-  { id: "gpt-6-sol", label: "Sol", input: 2, cached: 0.2, write: 2.5, output: 10 },
-  { id: "gpt-6.1-sol", label: "Sol 6.1", input: 2, cached: 0.1, write: 2.5, output: 10 },
-];
 export const YEN_PER_USD = 159.35;
 export const PAGE_LIMITS = { maxItems: 1000, maxItemChars: 5000, maxBatchChars: 10000 };
 const MAX_BATCH_ITEMS = 12;
@@ -54,11 +48,47 @@ export function permissionOrigin(baseUrl) {
   return `${url.protocol}//${url.hostname}/*`;
 }
 
-export function normalizeModel(value = DEFAULT_MODEL) {
+export function normalizeModel(value) {
   if (typeof value !== "string" || !/^[\w./:-]{1,160}$/.test(value.trim())) {
     throw new UserError("モデルIDを入力してください（空白は使えません）。");
   }
   return value.trim();
+}
+
+// 公開するJSONと拡張同梱のJSONは同じ形式。料金は100万トークン当たりの米ドル。
+export function validateCatalog(value) {
+  if (value?.version !== 1 || !Array.isArray(value.models) || !value.models.length || value.models.length > 100)
+    throw new Error("モデル一覧の形式が正しくありません。");
+  const ids = new Set();
+  const models = value.models.map(({ id, label, input, cached, write, output, reasoningEffort }) => {
+    if (
+      normalizeModel(id) !== id ||
+      ids.has(id) ||
+      typeof label !== "string" ||
+      !label.trim() ||
+      label.length > 100 ||
+      ![input, cached, write, output].every((n) => Number.isFinite(n) && n >= 0 && n <= 1_000_000) ||
+      (reasoningEffort !== undefined && reasoningEffort !== "none")
+    )
+      throw new Error("モデルまたは料金が正しくありません。");
+    ids.add(id);
+    return { id, label, input, cached, write, output, ...(reasoningEffort && { reasoningEffort }) };
+  });
+  if (!ids.has(value.recommended)) throw new Error("推奨モデルが一覧にありません。");
+  return { version: 1, recommended: value.recommended, models };
+}
+
+export async function fetchModelCatalog(bundled = false) {
+  const url = bundled ? chrome.runtime.getURL("models.json") : "https://uotian.github.io/lingo/models.json";
+  const response = await fetch(url, {
+    credentials: "omit",
+    referrerPolicy: "no-referrer",
+    redirect: "error",
+    cache: "no-cache",
+    signal: AbortSignal.timeout(3000),
+  });
+  if (!response.ok) throw new Error("モデル一覧を取得できませんでした。");
+  return validateCatalog(await response.json());
 }
 
 function itemCharLimit(item) {
@@ -144,9 +174,8 @@ export function parseTranslations(content, items) {
   return result.map(({ id, text }) => ({ id, text }));
 }
 
-function estimateYen(baseUrl, model, { usage, service_tier }) {
+function estimateYen(baseUrl, price, { usage, service_tier }) {
   if (baseUrl !== DEFAULT_BASE_URL || (service_tier && service_tier !== "default")) return null;
-  const price = MODELS.find(({ id }) => id === model);
   if (!price || !usage) return null;
   const { prompt_tokens: input, completion_tokens: output, prompt_tokens_details } = usage;
   const { cached_tokens: cached = 0, cache_write_tokens: write = 0 } = prompt_tokens_details ?? {};
@@ -182,7 +211,7 @@ export async function translateBatch(settings, items, { title, language, targetL
     ],
     response_format: { type: "json_object" },
   };
-  if (model === DEFAULT_MODEL) body.reasoning_effort = "none";
+  if (settings.price?.reasoningEffort === "none") body.reasoning_effort = "none";
   let response;
   try {
     response = await fetch(`${baseUrl}/chat/completions`, {
@@ -226,5 +255,8 @@ export async function translateBatch(settings, items, { title, language, targetL
   if (choice?.finish_reason !== "stop" || typeof choice.message?.content !== "string") {
     throw new UserError("翻訳が完了しませんでした。モデルやAPIの設定を確認してください。");
   }
-  return { translations: parseTranslations(choice.message.content, items), costYen: estimateYen(baseUrl, model, data) };
+  return {
+    translations: parseTranslations(choice.message.content, items),
+    costYen: estimateYen(baseUrl, settings.price, data),
+  };
 }

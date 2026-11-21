@@ -1,4 +1,5 @@
-import { test, beforeEach, vi } from "vitest";
+import { testCatalog } from "../catalog.js";
+import { test, beforeEach, afterEach, vi } from "vitest";
 import assert from "node:assert/strict";
 
 let listener,
@@ -58,10 +59,12 @@ globalThis.chrome = {
 await import("../../../background.js");
 beforeEach(() => {
   saved = {};
+  vi.stubGlobal("fetch", async () => Response.json(testCatalog));
   modes = {};
   removed = [];
   allowed = true;
 });
+afterEach(() => vi.unstubAllGlobals());
 const popup = { id: "test-extension", url: "chrome-extension://test-extension/popup.html" };
 function send(message, sender = popup) {
   return new Promise((resolve) => {
@@ -96,6 +99,8 @@ test("key persists locally but never returns to the popup", async () => {
     baseUrl: config.baseUrl,
     model: config.model,
     hasKey: true,
+    recommended: testCatalog.recommended,
+    models: testCatalog.models.map(({ id, label }) => ({ id, label })),
   });
 });
 
@@ -132,7 +137,11 @@ test("forget removes the saved key and preserves model and destination", async (
 });
 
 test("eight batches run at once and a free slot starts the next batch immediately", async () => {
-  saved = { settings: config, "site:example.com": true };
+  saved = {
+    settings: config,
+    "site:example.com": true,
+    modelCatalog: { catalog: testCatalog, refreshAfter: Date.now() + 60000 },
+  };
   const tabId = 1;
   const items = Array.from({ length: 120 }, (_, id) => ({ id, text: "Example " + id }));
   const applied = [];
@@ -216,4 +225,38 @@ test("forgetting the key during setup prevents a late injection or API request",
     permission.resolve(true);
     vi.unstubAllGlobals();
   }
+});
+
+test("catalog coalesces refreshes and keeps the last valid prices when the feed fails", async () => {
+  const updated = { ...testCatalog, recommended: testCatalog.models[1].id };
+  const stub = vi.fn(async () => Response.json(updated));
+  vi.stubGlobal("fetch", stub);
+  const [first, second] = await Promise.all([send({ type: "settings" }), send({ type: "settings" })]);
+  assert.equal(first.data.model, "@recommended");
+  assert.equal(second.data.recommended, updated.recommended);
+  assert.equal(stub.mock.calls.length, 1);
+  const [url, options] = stub.mock.calls[0];
+  assert.equal(url, "https://uotian.github.io/lingo/models.json");
+  assert.equal(options.credentials, "omit");
+  assert.equal(options.referrerPolicy, "no-referrer");
+  assert.equal(options.headers, undefined);
+  assert.equal(options.body, undefined);
+  saved.modelCatalog.refreshAfter = 0;
+  stub.mockImplementation(async () => Response.json({ version: 99 }));
+  assert.equal((await send({ type: "settings" })).data.recommended, updated.recommended);
+  await send({ type: "settings" });
+  assert.equal(stub.mock.calls.length, 2);
+});
+
+test("offline first launch uses the bundled catalog and retries later", async () => {
+  const calls = [];
+  vi.stubGlobal("fetch", async (url) => {
+    calls.push(url);
+    if (url.startsWith("https:")) throw new Error("offline");
+    return Response.json(testCatalog);
+  });
+  assert.equal((await send({ type: "settings" })).data.recommended, testCatalog.recommended);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1], globalThis.chrome.runtime.getURL("models.json"));
+  assert.ok(saved.modelCatalog.refreshAfter > Date.now());
 });

@@ -1,6 +1,7 @@
 import {
   DEFAULT_BASE_URL,
-  DEFAULT_MODEL,
+  RECOMMENDED_MODEL,
+  fetchModelCatalog,
   UserError,
   RetryableApiError,
   normalizeBaseUrl,
@@ -50,7 +51,7 @@ function waitForRetry(ms, signal) {
 async function settings() {
   await ready;
   const { settings = {} } = await chrome.storage.local.get("settings");
-  const defaults = { baseUrl: DEFAULT_BASE_URL, model: DEFAULT_MODEL, apiKey: "" };
+  const defaults = { baseUrl: DEFAULT_BASE_URL, model: RECOMMENDED_MODEL, apiKey: "" };
   return settings && typeof settings === "object" ? { ...defaults, ...settings } : defaults;
 }
 
@@ -73,18 +74,48 @@ async function readTabMode(tabId) {
   return (await chrome.storage.session.get(key))[key];
 }
 
-function publicSettings(value) {
+let pendingCatalog;
+async function readModelCatalog() {
+  await ready;
+  const { modelCatalog } =
+    /** @type {{modelCatalog?: {catalog: Awaited<ReturnType<typeof fetchModelCatalog>>, refreshAfter: number}}} */ (
+      await chrome.storage.local.get("modelCatalog")
+    );
+  if (modelCatalog?.refreshAfter > Date.now()) return modelCatalog.catalog;
+  let catalog, interval;
+  try {
+    catalog = await fetchModelCatalog();
+    interval = 24 * 60 * 60 * 1000;
+  } catch {
+    catalog = modelCatalog?.catalog ?? (await fetchModelCatalog(true));
+    interval = 15 * 60 * 1000;
+  }
+  await chrome.storage.local.set({ modelCatalog: { catalog, refreshAfter: Date.now() + interval } });
+  return catalog;
+}
+
+function getModelCatalog() {
+  pendingCatalog ??= readModelCatalog().finally(() => {
+    pendingCatalog = undefined;
+  });
+  return pendingCatalog;
+}
+
+async function publicSettings(value) {
+  const { recommended, models } = await getModelCatalog();
   return {
     baseUrl: value.baseUrl,
     model: value.model,
     hasKey: Boolean(value.apiKey),
+    recommended,
+    models: models.map(({ id, label }) => ({ id, label })),
   };
 }
 
 async function saveSettings(input) {
   const previous = await settings();
   const baseUrl = normalizeBaseUrl(input.baseUrl);
-  const model = normalizeModel(input.model);
+  const model = input.model === RECOMMENDED_MODEL ? input.model : normalizeModel(input.model);
   // eslint-disable-next-line no-control-regex -- Authorizationヘッダーに使うキーから制御文字を除外する。
   if (typeof input.apiKey !== "string" || input.apiKey.length > 1024 || /[\x00-\x20\x7f]/.test(input.apiKey)) {
     throw new UserError("APIキーに空白や改行が含まれています。");
@@ -222,6 +253,9 @@ async function start(tabId, mode = "manual", documentId = undefined) {
   }
   const [site, savedMode] = await Promise.all([readSite(hostname), readTabMode(tabId)]);
   if (mode === "auto" && !site.enabled) return {};
+  const catalog = await getModelCatalog();
+  const model = config.model === RECOMMENDED_MODEL ? catalog.recommended : config.model;
+  const price = catalog.models.find((entry) => entry.id === model);
   if (jobs.get(tabId) !== previous) return {};
   const job = {
     id: crypto.randomUUID(),
@@ -244,7 +278,7 @@ async function start(tabId, mode = "manual", documentId = undefined) {
       throw new UserError(job.error);
     }
   }
-  if (!job.controller.signal.aborted) void run(tabId, job, config, mode === "incremental");
+  if (!job.controller.signal.aborted) void run(tabId, job, { ...config, model, price }, mode === "incremental");
   return {};
 }
 

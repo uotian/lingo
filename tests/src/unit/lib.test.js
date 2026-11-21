@@ -2,7 +2,7 @@ import { test, afterEach } from "vitest";
 import assert from "node:assert/strict";
 import {
   DEFAULT_BASE_URL,
-  DEFAULT_MODEL,
+  validateCatalog,
   RetryableApiError,
   YEN_PER_USD,
   normalizeBaseUrl,
@@ -15,6 +15,31 @@ import {
   TRANSLATION_PROMPT,
 } from "../../../lib.js";
 
+import bundled from "../../../models.json" with { type: "json" };
+import { testCatalog } from "../catalog.js";
+const DEFAULT_MODEL = testCatalog.recommended;
+
+test("catalog requires unique models, a listed recommendation and complete numeric prices", () => {
+  assert.deepEqual(validateCatalog(bundled), bundled);
+  const [first] = bundled.models;
+  for (const invalid of [
+    { version: 2 },
+    { recommended: "missing" },
+    { models: [] },
+    { models: [first, first] },
+    ...[
+      { id: "@recommended" },
+      { input: -1 },
+      { output: "1" },
+      { write: Infinity },
+      { cached: null },
+      { label: "" },
+      { reasoningEffort: "invalid" },
+    ].map((change) => ({ models: [{ ...first, ...change }] })),
+  ])
+    assert.throws(() => validateCatalog({ ...bundled, ...invalid }));
+});
+
 const originalFetch = globalThis.fetch;
 afterEach(() => {
   globalThis.fetch = originalFetch;
@@ -23,7 +48,12 @@ const items = [
   { id: 0, text: "Hello" },
   { id: 1, text: "World" },
 ];
-const config = { apiKey: "test-only-key", baseUrl: DEFAULT_BASE_URL, model: DEFAULT_MODEL };
+const config = {
+  apiKey: "test-only-key",
+  baseUrl: DEFAULT_BASE_URL,
+  model: DEFAULT_MODEL,
+  price: testCatalog.models.find((m) => m.id === DEFAULT_MODEL),
+};
 const context = { title: "Document", language: "en" };
 const signal = () => new AbortController().signal;
 const payload = (translations) => ({
@@ -149,8 +179,11 @@ test("estimates standard OpenAI usage at the model's ordinary, cached, write and
     ["gpt-6-sol", 600 * 2 + 300 * 0.2 + 100 * 2.5 + 200 * 10],
     ["gpt-6.1-sol", 600 * 2 + 300 * 0.1 + 100 * 2.5 + 200 * 10],
   ])
-    assert.equal(await cost({ ...config, model }), (dollarsPerMillion / 1_000_000) * YEN_PER_USD);
-  assert.equal(await cost({ ...config, model: "custom-model" }), null);
+    assert.equal(
+      await cost({ ...config, model, price: testCatalog.models.find((m) => m.id === model) }),
+      (dollarsPerMillion / 1_000_000) * YEN_PER_USD,
+    );
+  assert.equal(await cost({ ...config, model: "custom-model", price: undefined }), null);
   assert.equal(await cost({ ...config, baseUrl: "https://elsewhere.example/v1" }), null);
   response.service_tier = "priority";
   assert.equal(await cost(), null);
@@ -169,7 +202,7 @@ test("custom models receive no Luna-only reasoning parameter", async () => {
       ]),
     );
   };
-  await translateBatch({ ...config, model: "custom-model" }, items, context, signal());
+  await translateBatch({ ...config, model: "custom-model", price: undefined }, items, context, signal());
 });
 
 test("error responses never expose server body or credentials", async () => {
