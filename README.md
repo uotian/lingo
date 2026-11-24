@@ -2,6 +2,8 @@
 
 英語・日本語・中国語の間でページを翻訳する、個人用のChrome拡張です。自分のOpenAI APIキーを使い、選んだ言語の原文とページタイトルを設定したAPIに送ります。
 
+[プライバシーポリシー / Privacy Policy](https://uotian.github.io/lingo/privacy/)
+
 ## Chromeで使う
 
 1. Chromeのアドレスバーに `chrome://extensions` を入力し、「デベロッパーモード」をオンにします。

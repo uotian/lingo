@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lingo プライバシーポリシー / Privacy Policy</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        line-height: 1.75;
+      }
+      body {
+        max-width: 46rem;
+        padding: 0 1.25rem;
+        margin: 2rem auto 4rem;
+        overflow-wrap: anywhere;
+      }
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.25rem;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.35;
+      }
+      h2 {
+        margin-top: 2rem;
+      }
+      h3 {
+        margin-bottom: 0.35rem;
+      }
+      p {
+        margin-top: 0.35rem;
+      }
+      a {
+        text-underline-offset: 0.18em;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid GrayText;
+        margin: 3rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <nav aria-label="言語 / Language">
+      <a href="#ja" lang="ja">日本語</a><a href="#en" lang="en">English</a>
+    </nav>
+    <main>
+      <section id="ja" aria-labelledby="title-ja">
+        <h1 id="title-ja">Lingo プライバシーポリシー</h1>
+        <p>
+          Chrome ウェブストア版 0.1.0 · 更新日
+          <time datetime="2026-11-25">2026年11月25日</time>
+        </p>
+        <p>
+          Lingoは、閲覧中のページを利用者自身のAPIキーで翻訳するブラウザー拡張機能です。翻訳は利用者のブラウザーから、設定したAPI提供元（標準はOpenAI）に直接依頼します。Lingoの開発者が翻訳を中継するサーバーはなく、開発者は利用者のAPIキー、ページタイトル、本文、閲覧履歴を受け取りません。
+        </p>
+        <h2>ブラウザーから送信するデータ</h2>
+        <h3>ページの翻訳</h3>
+        <p>
+          「翻訳」を押したとき、または自動翻訳を許可したサイトで、Lingoは端末に訳文が保存されていない箇所を翻訳します。スクロールなどで後から表示された文章も対象です。APIキーを認証に使い、ページタイトル、対象の文章とその識別番号、翻訳元・翻訳先の言語、モデル名を設定先のAPIに送ります。翻訳リクエストに閲覧URLの専用項目はありません。ログイン後のページを含め、タイトルや翻訳対象の文章に書かれた氏名、URL、メッセージなどは、その一部として送信されることがあります。
+        </p>
+        <h3>翻訳元の言語判定</h3>
+        <p>
+          まずChromeが言語を判定します。Chromeが判定できず、OpenAI公式の接続先とAPIキーを設定している通常のタブでは、Lingoを開いた時点で「翻訳」を押す前でも、言語判定のため本文の抜粋（最大2,000文字）、候補言語、モデル名をOpenAIに送ることがあります。シークレットウィンドウでは外部での言語判定を行いません。翻訳を実行した場合は、シークレットウィンドウでも設定した翻訳APIへ送信します。
+        </p>
+        <p>
+          翻訳・言語判定でAPI提供元が受信したデータの取り扱いと保持期間には、その提供元の方針が適用されます。
+        </p>
+        <h3>モデル一覧の更新</h3>
+        <p>
+          Lingoはモデル名と単価の一覧をGitHub
+          Pagesから取得します。この通信にAPIキー、閲覧ページのタイトル、本文は含めません。GitHub
+          Pagesはセキュリティのため、接続元IPアドレスを記録・保存します。<a
+            href="https://docs.github.com/ja/pages/getting-started-with-github-pages/what-is-github-pages"
+            >GitHub Pagesのデータ収集について</a
+          >
+        </p>
+        <h2>端末に保存するデータと利用者の操作</h2>
+        <p>
+          APIキー、接続先、モデル、言語、ホスト名ごとの設定、利用量の累計をChromeプロフィール内に保存します。キーの読み取りは拡張機能の信頼済み部分に限定しています。Chrome同期は使わず、Lingo独自の暗号化は行いません。タブごとの表示モードと言語候補は一時的に保存します。
+        </p>
+        <p>
+          同じサイトで訳文を再利用するため、訳文、照合用ハッシュ、最終使用時刻を、全サイト合わせて直近10,000件まで端末に保存します。シークレットウィンドウではこのキャッシュの読み書きを行いません。「キーを削除」で保存済みのキーを、「クリア」で利用量の累計を削除できます。どちらの操作でも訳文キャッシュは残ります。サイトごとの自動翻訳はポップアップでオフにできます。
+        </p>
+        <h2>利用目的と問い合わせ</h2>
+        <p>
+          Lingoにおけるユーザーデータの利用・移転は、Chrome
+          ウェブストアのユーザーデータポリシーと限定使用（Limited
+          Use）の要件に従います。データの利用目的はページ翻訳とその動作に必要な処理です。開発者はこのデータを販売せず、広告、行動分析、信用評価、融資の判断に利用しません。<a
+            href="https://developer.chrome.com/docs/webstore/program-policies/limited-use"
+            >Chrome ウェブストアの限定使用ポリシー</a
+          >
+        </p>
+        <p>
+          お問い合わせは公開のGitHub
+          Issuesで受け付けています。APIキーや非公開ページの本文は投稿しないでください。<a
+            href="https://github.com/uotian/lingo/issues"
+            >Lingoのサポート窓口</a
+          >
+        </p>
+      </section>
+      <hr />
+      <section id="en" lang="en" aria-labelledby="title-en">
+        <h2 id="title-en">Lingo Privacy Policy</h2>
+        <p>
+          Chrome Web Store edition, version 0.1.0 · Updated
+          <time datetime="2026-11-25">November 25, 2026</time>
+        </p>
+        <p>
+          Lingo translates the page you are reading using your own API key. Your
+          browser sends translation requests directly to the API provider you
+          configure (OpenAI by default). The Lingo developer does not operate a
+          translation relay or receive your API key, page titles, page text, or
+          browsing history.
+        </p>
+        <h3>Page translation</h3>
+        <p>
+          When you select Translate, or visit a site you have enabled for
+          automatic translation, Lingo translates passages that are missing from
+          its local cache. This includes text that appears as you scroll. Your
+          API key authenticates the request to your chosen provider. The request
+          includes the page title, source passages and their identifiers, source
+          and target languages, and model name. There is no separate field for
+          the page URL. Names, URLs, and messages in the title or passages can
+          be sent as part of that text, including on signed-in pages.
+        </p>
+        <h3>Language detection</h3>
+        <p>
+          Chrome first tries to identify the page language. If it cannot, and
+          you use the official OpenAI endpoint with an API key in a regular tab,
+          opening Lingo may send up to 2,000 characters of page text, candidate
+          languages, and a model name to OpenAI before you select Translate.
+          Lingo skips external language detection in Incognito. Translating in
+          Incognito still sends text to your configured translation API.
+        </p>
+        <p>
+          The API provider’s policies govern how it handles and retains the data
+          it receives for translation and language detection.
+        </p>
+        <h3>Model catalog</h3>
+        <p>
+          Lingo fetches a public list of models and prices from GitHub Pages.
+          This request excludes your API key, the title of the page you are
+          reading, and its content. GitHub Pages logs and retains the requesting
+          IP address for security purposes.
+          <a
+            href="https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages"
+            >GitHub Pages data collection</a
+          >
+        </p>
+        <h3>Local storage and your controls</h3>
+        <p>
+          Your API key, endpoint, model, language, per-host preferences, and
+          usage totals are stored in your Chrome profile. Only trusted parts of
+          the extension can read the key. Lingo does not use Chrome Sync or add
+          its own layer of encryption. Per-tab display settings and language
+          candidates are stored temporarily.
+        </p>
+        <p>
+          Lingo stores up to 10,000 recent translations across all sites, along
+          with lookup hashes and last-used timestamps, so it can reuse
+          translations on the same site. It skips this cache in Incognito. In
+          settings, you can delete your saved key or clear usage totals. Both
+          actions leave cached translations in place. You can turn off automatic
+          translation for a site in the popup.
+        </p>
+        <h3>Use of data and contact</h3>
+        <p>
+          Lingo’s use and transfer of user data complies with the Chrome Web
+          Store User Data Policy, including its Limited Use requirements. Lingo
+          uses this data for page translation and the functions that support it.
+          The developer does not sell it or use it for advertising, behavioral
+          analytics, credit assessments, or lending decisions.
+          <a
+            href="https://developer.chrome.com/docs/webstore/program-policies/limited-use"
+            >Chrome Web Store Limited Use policy</a
+          >
+        </p>
+        <p>
+          For questions, contact Lingo support via GitHub Issues. This is a
+          public forum, so please keep API keys and private page content out of
+          reports.
+          <a href="https://github.com/uotian/lingo/issues">Lingo support</a>
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
